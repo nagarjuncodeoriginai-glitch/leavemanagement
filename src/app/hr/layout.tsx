@@ -27,6 +27,7 @@ const navItems = [
   { href: "/hr", label: "Dashboard", icon: LayoutDashboard, description: "Overview & analytics" },
   { href: "/hr/employees", label: "Employees", icon: Users, description: "Manage workforce" },
   { href: "/hr/leaves", label: "Leave Management", icon: CalendarCheck, description: "Approve & track" },
+  { href: "/hr/onboarding", label: "Onboarding", icon: ChevronRight, description: "New hire setup" },
 ];
 
 const quickActions = [
