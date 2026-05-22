@@ -7,7 +7,6 @@ import {
   XCircle,
   Clock,
   CalendarDays,
-  Filter,
 } from "lucide-react";
 import { Leave } from "@/types";
 

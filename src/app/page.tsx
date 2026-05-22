@@ -109,10 +109,10 @@ export default function LandingPage() {
             <div className="bg-white rounded-2xl shadow-2xl shadow-slate-200/50 border border-slate-200/50 p-8 max-w-5xl mx-auto">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: "Total Employees", value: "248", icon: Users, color: "blue" },
-                  { label: "On Leave Today", value: "12", icon: CalendarCheck, color: "amber" },
-                  { label: "Pending Requests", value: "8", icon: Clock, color: "purple" },
-                  { label: "Departments", value: "6", icon: Building2, color: "emerald" },
+                  { label: "Total Employees", value: "248", icon: Users, iconClass: "text-blue-500" },
+                  { label: "On Leave Today", value: "12", icon: CalendarCheck, iconClass: "text-amber-500" },
+                  { label: "Pending Requests", value: "8", icon: Clock, iconClass: "text-purple-500" },
+                  { label: "Departments", value: "6", icon: Building2, iconClass: "text-emerald-500" },
                 ].map((stat, i) => (
                   <motion.div
                     key={stat.label}
@@ -121,7 +121,7 @@ export default function LandingPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.6 + i * 0.1 }}
                   >
-                    <stat.icon className={`w-8 h-8 text-${stat.color}-500 mb-2`} />
+                    <stat.icon className={`w-8 h-8 ${stat.iconClass} mb-2`} />
                     <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
                     <p className="text-sm text-slate-500">{stat.label}</p>
                   </motion.div>

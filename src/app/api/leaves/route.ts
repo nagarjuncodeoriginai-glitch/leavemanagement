@@ -128,6 +128,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Also check pending leaves that haven't been approved yet
+    const pendingDays = db.leaves
+      .filter(
+        (l) =>
+          l.employee_id === user.id &&
+          l.status === "pending" &&
+          new Date(l.start_date).getMonth() + 1 === month &&
+          new Date(l.start_date).getFullYear() === year
+      )
+      .reduce((sum, l) => {
+        const s = new Date(l.start_date);
+        const e = new Date(l.end_date);
+        return sum + Math.ceil((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      }, 0);
+
+    if (balance.remaining_cl - pendingDays < diffDays) {
+      return NextResponse.json(
+        { success: false, message: `Insufficient leave balance. You have ${balance.remaining_cl - pendingDays} CL available (${pendingDays} day(s) pending approval).` },
+        { status: 400 }
+      );
+    }
+
     // Create leave application
     const newLeave = {
       id: getNextId(db.leaves),

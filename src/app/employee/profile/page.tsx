@@ -4,11 +4,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   User,
-  Mail,
-  Phone,
-  MapPin,
-  Building2,
-  Calendar,
   Briefcase,
   CreditCard,
 } from "lucide-react";

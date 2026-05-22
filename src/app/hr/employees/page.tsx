@@ -3,12 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Plus,
   Search,
   Edit2,
   Trash2,
   X,
-  Filter,
   UserPlus,
   AlertCircle,
   Users,
@@ -39,6 +37,7 @@ const defaultForm: EmployeeFormData = {
   aadhaar_number: "",
   username: "",
   password: "",
+  profile_photo: "",
   status: "active",
 };
 
@@ -119,6 +118,7 @@ export default function EmployeesPage() {
     setForm({
       ...emp,
       password: "",
+      profile_photo: emp.profile_photo || "",
       date_of_birth: emp.date_of_birth?.split("T")[0] || "",
       doj: emp.doj?.split("T")[0] || "",
       confirmation_date: emp.confirmation_date?.split("T")[0] || "",
@@ -231,8 +231,12 @@ export default function EmployeesPage() {
                   <tr key={emp.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400 flex items-center justify-center text-white text-sm font-semibold">
-                          {emp.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400 flex items-center justify-center text-white text-sm font-semibold overflow-hidden">
+                          {emp.profile_photo ? (
+                            <img src={emp.profile_photo} alt={emp.full_name} className="w-full h-full object-cover" />
+                          ) : (
+                            emp.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2)
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-medium text-slate-900">{emp.full_name}</p>
@@ -337,6 +341,52 @@ export default function EmployeesPage() {
                     <span className="text-sm text-red-700">{formError}</span>
                   </div>
                 )}
+
+                {/* Profile Photo */}
+                <h4 className="text-sm font-semibold text-slate-900 mb-3 uppercase tracking-wider">Profile Photo</h4>
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-20 h-20 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden">
+                    {form.profile_photo ? (
+                      <img src={form.profile_photo} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <Users className="w-8 h-8 text-slate-400" />
+                    )}
+                  </div>
+                  <div>
+                    <label className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg cursor-pointer hover:bg-blue-100 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            if (file.size > 500 * 1024) {
+                              setFormError("Photo must be less than 500KB");
+                              return;
+                            }
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setForm({ ...form, profile_photo: reader.result as string });
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                      Upload Photo
+                    </label>
+                    {form.profile_photo && (
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, profile_photo: "" })}
+                        className="ml-2 text-xs text-red-500 hover:text-red-700"
+                      >
+                        Remove
+                      </button>
+                    )}
+                    <p className="text-xs text-slate-500 mt-1">JPG, PNG. Max 500KB.</p>
+                  </div>
+                </div>
 
                 {/* Basic Information */}
                 <h4 className="text-sm font-semibold text-slate-900 mb-3 uppercase tracking-wider">Basic Information</h4>

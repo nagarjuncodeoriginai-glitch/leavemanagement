@@ -126,6 +126,7 @@ export async function POST(request: NextRequest) {
       aadhaar_number: data.aadhaar_number || "",
       username: data.username,
       password: hashedPassword,
+      profile_photo: (body.profile_photo as string) || "",
       status: data.status || "active" as const,
       created_at: now,
       updated_at: now,

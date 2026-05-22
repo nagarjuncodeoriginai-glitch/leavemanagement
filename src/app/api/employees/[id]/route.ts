@@ -57,7 +57,7 @@ export async function PUT(
       "department", "designation", "manager_name", "doj", "employment_type",
       "probation_period", "confirmation_date", "work_location", "shift_timing",
       "salary_package", "bank_account_number", "ifsc_code", "pan_number",
-      "aadhaar_number", "username", "status",
+      "aadhaar_number", "username", "status", "profile_photo",
     ];
 
     for (const field of allowedFields) {

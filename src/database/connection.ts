@@ -41,6 +41,7 @@ export interface DBData {
     aadhaar_number: string;
     username: string;
     password: string;
+    profile_photo: string;
     status: "active" | "inactive" | "on_probation";
     created_at: string;
     updated_at: string;

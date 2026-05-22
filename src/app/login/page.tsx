@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { Building2, Eye, EyeOff, Lock, User, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Lock, User, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
