@@ -9,7 +9,12 @@ import {
   CalendarCheck,
   TrendingUp,
   ArrowUpRight,
+  ArrowRight,
+  Activity,
+  Briefcase,
+  PieChart,
 } from "lucide-react";
+import Link from "next/link";
 
 interface DashboardData {
   totalEmployees: number;
@@ -28,11 +33,34 @@ interface DashboardData {
   }[];
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { type: "spring", stiffness: 100, damping: 15 },
+  },
+};
+
 export default function HRDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [greeting, setGreeting] = useState("");
 
   useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting("Good Morning");
+    else if (hour < 17) setGreeting("Good Afternoon");
+    else setGreeting("Good Evening");
     fetchDashboard();
   }, []);
 
@@ -53,7 +81,14 @@ export default function HRDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+        <motion.div
+          className="flex flex-col items-center gap-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <div className="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
+          <p className="text-sm text-slate-500 animate-pulse">Loading dashboard...</p>
+        </motion.div>
       </div>
     );
   }
@@ -63,56 +98,132 @@ export default function HRDashboard() {
       label: "Total Employees",
       value: data?.totalEmployees || 0,
       icon: Users,
-      color: "blue",
-      bgColor: "bg-blue-50",
-      iconColor: "text-blue-600",
+      gradient: "from-blue-500 to-blue-600",
+      bgGlow: "shadow-blue-500/20",
+      lightBg: "bg-blue-50",
+      change: "+12%",
     },
     {
       label: "Active Employees",
       value: data?.activeEmployees || 0,
       icon: UserCheck,
-      color: "emerald",
-      bgColor: "bg-emerald-50",
-      iconColor: "text-emerald-600",
+      gradient: "from-emerald-500 to-emerald-600",
+      bgGlow: "shadow-emerald-500/20",
+      lightBg: "bg-emerald-50",
+      change: "+5%",
     },
     {
       label: "Pending Leaves",
       value: data?.pendingLeaves || 0,
       icon: Clock,
-      color: "amber",
-      bgColor: "bg-amber-50",
-      iconColor: "text-amber-600",
+      gradient: "from-amber-500 to-orange-500",
+      bgGlow: "shadow-amber-500/20",
+      lightBg: "bg-amber-50",
+      change: "Action needed",
     },
     {
       label: "Approved This Month",
       value: data?.approvedLeavesThisMonth || 0,
       icon: CalendarCheck,
-      color: "purple",
-      bgColor: "bg-purple-50",
-      iconColor: "text-purple-600",
+      gradient: "from-violet-500 to-purple-600",
+      bgGlow: "shadow-violet-500/20",
+      lightBg: "bg-violet-50",
+      change: "This month",
     },
   ];
 
+  const deptColors = [
+    "from-blue-400 to-blue-500",
+    "from-emerald-400 to-emerald-500",
+    "from-violet-400 to-violet-500",
+    "from-amber-400 to-amber-500",
+    "from-rose-400 to-rose-500",
+    "from-cyan-400 to-cyan-500",
+    "from-indigo-400 to-indigo-500",
+  ];
+
   return (
-    <div className="space-y-8">
+    <motion.div
+      className="space-y-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Welcome Header */}
+      <motion.div variants={itemVariants} className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 p-8 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.3),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(59,130,246,0.2),transparent_50%)]" />
+        <div className="relative z-10">
+          <motion.p
+            className="text-blue-200 text-sm font-medium"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            {greeting}, Admin
+          </motion.p>
+          <motion.h1
+            className="text-3xl font-bold mt-1"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            HR Dashboard
+          </motion.h1>
+          <motion.p
+            className="text-blue-200/80 mt-2 text-sm max-w-lg"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            Here&apos;s what&apos;s happening with your team today. Manage employees, track leaves, and monitor department performance.
+          </motion.p>
+        </div>
+        {/* Floating decorative elements */}
+        <motion.div
+          className="absolute top-4 right-8 w-20 h-20 rounded-full bg-white/5 border border-white/10"
+          animate={{ y: [0, -8, 0], rotate: [0, 5, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute bottom-4 right-32 w-12 h-12 rounded-lg bg-white/5 border border-white/10"
+          animate={{ y: [0, 6, 0], rotate: [0, -5, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        />
+      </motion.div>
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {stats.map((stat, i) => (
           <motion.div
             key={stat.label}
-            className="bg-white rounded-xl border border-slate-200/50 p-6 hover:shadow-lg transition-all"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
+            variants={itemVariants}
+            whileHover={{ y: -4, scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={`relative bg-white rounded-2xl p-6 border border-slate-100 shadow-lg ${stat.bgGlow} hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden group`}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className={`w-10 h-10 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
-                <stat.icon className={`w-5 h-5 ${stat.iconColor}`} />
+            {/* Background decoration */}
+            <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full bg-gradient-to-r ${stat.gradient} opacity-10 group-hover:opacity-20 transition-opacity`} />
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${stat.gradient} flex items-center justify-center shadow-lg ${stat.bgGlow}`}>
+                  <stat.icon className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                  {stat.change}
+                </span>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-slate-400" />
+              <motion.p
+                className="text-3xl font-bold text-slate-900"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 + i * 0.1 }}
+              >
+                {stat.value}
+              </motion.p>
+              <p className="text-sm text-slate-500 mt-1 font-medium">{stat.label}</p>
             </div>
-            <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
-            <p className="text-sm text-slate-500 mt-1">{stat.label}</p>
           </motion.div>
         ))}
       </div>
@@ -120,111 +231,161 @@ export default function HRDashboard() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Department Distribution */}
         <motion.div
-          className="lg:col-span-1 bg-white rounded-xl border border-slate-200/50 p-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          variants={itemVariants}
+          className="lg:col-span-1 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-md transition-shadow"
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="font-semibold text-slate-900">Departments</h3>
-            <TrendingUp className="w-4 h-4 text-slate-400" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 flex items-center justify-center">
+                <PieChart className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="font-semibold text-slate-900">Departments</h3>
+            </div>
           </div>
           <div className="space-y-4">
             {data?.departmentWise && data.departmentWise.length > 0 ? (
               data.departmentWise.map((dept, i) => (
-                <div key={dept.department} className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
+                <motion.div
+                  key={dept.department}
+                  className="group"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.6 + i * 0.08 }}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${deptColors[i % deptColors.length]}`} />
                       <span className="text-sm font-medium text-slate-700">
                         {dept.department}
                       </span>
-                      <span className="text-sm text-slate-500">{dept.count}</span>
                     </div>
-                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full gradient-primary rounded-full transition-all"
-                        style={{
-                          width: `${(dept.count / (data.totalEmployees || 1)) * 100}%`,
-                        }}
-                      />
-                    </div>
+                    <span className="text-sm font-bold text-slate-900">{dept.count}</span>
                   </div>
-                </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <motion.div
+                      className={`h-full rounded-full bg-gradient-to-r ${deptColors[i % deptColors.length]}`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(dept.count / (data.totalEmployees || 1)) * 100}%` }}
+                      transition={{ delay: 0.8 + i * 0.1, duration: 0.6, ease: "easeOut" }}
+                    />
+                  </div>
+                </motion.div>
               ))
             ) : (
-              <p className="text-sm text-slate-500 text-center py-8">
-                No department data available
-              </p>
+              <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                <Briefcase className="w-10 h-10 mb-3 opacity-50" />
+                <p className="text-sm">No department data yet</p>
+                <p className="text-xs mt-1">Add employees to see distribution</p>
+              </div>
             )}
           </div>
         </motion.div>
 
         {/* Recent Leave Applications */}
         <motion.div
-          className="lg:col-span-2 bg-white rounded-xl border border-slate-200/50 p-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          variants={itemVariants}
+          className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-6 shadow-sm hover:shadow-md transition-shadow"
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="font-semibold text-slate-900">Recent Leave Applications</h3>
-            <a href="/hr/leaves" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center">
+                <Activity className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900">Recent Leave Requests</h3>
+                <p className="text-xs text-slate-500">Latest applications from your team</p>
+              </div>
+            </div>
+            <Link
+              href="/hr/leaves"
+              className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
+            >
               View All
-            </a>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
           <div className="overflow-x-auto">
             {data?.recentLeaves && data.recentLeaves.length > 0 ? (
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-100">
-                    <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 uppercase">Employee</th>
-                    <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 uppercase">Dates</th>
-                    <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 uppercase">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.recentLeaves.map((leave) => (
-                    <tr key={leave.id} className="border-b border-slate-50 last:border-0">
-                      <td className="py-3 px-2">
-                        <div>
-                          <p className="text-sm font-medium text-slate-900">
-                            {leave.employee_name}
-                          </p>
-                          <p className="text-xs text-slate-500">{leave.emp_id}</p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-2">
-                        <p className="text-sm text-slate-700">
-                          {new Date(leave.start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+              <div className="space-y-3">
+                {data.recentLeaves.map((leave, i) => (
+                  <motion.div
+                    key={leave.id}
+                    className="flex items-center justify-between p-4 rounded-xl bg-slate-50/80 hover:bg-slate-100/80 border border-slate-100 transition-all group"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 + i * 0.08 }}
+                    whileHover={{ x: 4 }}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                        {leave.employee_name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {leave.employee_name}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {leave.emp_id} &middot; {new Date(leave.start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                           {" - "}
                           {new Date(leave.end_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                         </p>
-                      </td>
-                      <td className="py-3 px-2">
-                        <span
-                          className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
-                            leave.status === "approved"
-                              ? "bg-emerald-50 text-emerald-700"
-                              : leave.status === "rejected"
-                              ? "bg-red-50 text-red-700"
-                              : "bg-amber-50 text-amber-700"
-                          }`}
-                        >
-                          {leave.status.charAt(0).toUpperCase() + leave.status.slice(1)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                    <span
+                      className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
+                        leave.status === "approved"
+                          ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                          : leave.status === "rejected"
+                          ? "bg-red-100 text-red-700 border border-red-200"
+                          : "bg-amber-100 text-amber-700 border border-amber-200"
+                      }`}
+                    >
+                      {leave.status.charAt(0).toUpperCase() + leave.status.slice(1)}
+                    </span>
+                  </motion.div>
+                ))}
+              </div>
             ) : (
-              <p className="text-sm text-slate-500 text-center py-8">
-                No leave applications yet
-              </p>
+              <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                <CalendarCheck className="w-12 h-12 mb-3 opacity-40" />
+                <p className="text-sm font-medium">No leave applications yet</p>
+                <p className="text-xs mt-1">Leave requests will appear here</p>
+              </div>
             )}
           </div>
         </motion.div>
       </div>
-    </div>
+
+      {/* Quick Actions */}
+      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Link href="/hr/employees" className="group">
+          <div className="relative overflow-hidden p-6 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all hover:-translate-y-1">
+            <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-white/10" />
+            <Users className="w-8 h-8 mb-3" />
+            <h4 className="font-semibold text-lg">Manage Employees</h4>
+            <p className="text-blue-100 text-sm mt-1">Add, edit, or view employee profiles</p>
+            <ArrowUpRight className="w-5 h-5 absolute top-4 right-4 opacity-60 group-hover:opacity-100 transition-opacity" />
+          </div>
+        </Link>
+        <Link href="/hr/leaves" className="group">
+          <div className="relative overflow-hidden p-6 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all hover:-translate-y-1">
+            <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-white/10" />
+            <Clock className="w-8 h-8 mb-3" />
+            <h4 className="font-semibold text-lg">Leave Requests</h4>
+            <p className="text-amber-100 text-sm mt-1">Review and approve pending leaves</p>
+            <ArrowUpRight className="w-5 h-5 absolute top-4 right-4 opacity-60 group-hover:opacity-100 transition-opacity" />
+          </div>
+        </Link>
+        <div className="group cursor-pointer" onClick={() => fetch("/api/leaves/reset", { method: "POST" }).then(() => fetchDashboard())}>
+          <div className="relative overflow-hidden p-6 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/30 transition-all hover:-translate-y-1">
+            <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-white/10" />
+            <TrendingUp className="w-8 h-8 mb-3" />
+            <h4 className="font-semibold text-lg">Reset Balances</h4>
+            <p className="text-emerald-100 text-sm mt-1">Monthly CL balance reset for all</p>
+            <ArrowUpRight className="w-5 h-5 absolute top-4 right-4 opacity-60 group-hover:opacity-100 transition-opacity" />
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
