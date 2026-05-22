@@ -7,8 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:migrate": "ts-node src/database/migrate.ts",
-    "db:seed": "ts-node src/database/seed.ts"
+    "db:seed": "npx tsx src/database/seed.ts"
   },
   "dependencies": {
     "next": "^15.0.0",
@@ -23,7 +22,7 @@
     "@hookform/resolvers": "^3.9.0",
     "zod": "^3.23.0",
     "axios": "^1.7.0",
-    "lucide-react": "^0.450.0",
+    "lucide-react": "^0.469.0",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.11.0",
@@ -50,6 +49,6 @@
     "@types/jsonwebtoken": "^9.0.7",
     "eslint": "^9.0.0",
     "eslint-config-next": "^15.0.0",
-    "ts-node": "^10.9.0"
+    "tsx": "^4.19.0"
   }
 }
