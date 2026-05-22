@@ -12,6 +12,7 @@ import {
   X,
   ChevronRight,
 } from "lucide-react";
+import { LiveClock } from "@/components/ui/live-clock";
 
 const navItems = [
   { href: "/hr", label: "Dashboard", icon: LayoutDashboard },
@@ -142,6 +143,7 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
                 {navItems.find((item) => item.href === pathname)?.label || "HR Portal"}
               </h1>
             </div>
+            <LiveClock />
           </div>
         </header>
 

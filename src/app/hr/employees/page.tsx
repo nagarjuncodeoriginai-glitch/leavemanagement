@@ -10,8 +10,12 @@ import {
   UserPlus,
   AlertCircle,
   Users,
+  Download,
 } from "lucide-react";
 import { Employee, EmployeeFormData } from "@/types";
+import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { exportToCSV } from "@/utils/export-csv";
 
 const defaultForm: EmployeeFormData = {
   emp_id: "",
@@ -54,6 +58,8 @@ export default function EmployeesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const toast = useToast();
+  const { confirm } = useConfirm();
 
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
@@ -104,11 +110,13 @@ export default function EmployeesPage() {
         setForm(defaultForm);
         setEditId(null);
         fetchEmployees();
+        toast.success(editId ? "Employee Updated" : "Employee Created", json.message);
       } else {
         setFormError(json.message || "Operation failed");
       }
     } catch {
       setFormError("Network error. Please try again.");
+      toast.error("Network Error", "Please check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -128,15 +136,24 @@ export default function EmployeesPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this employee?")) return;
+    const confirmed = await confirm({
+      title: "Delete Employee",
+      message: "Are you sure you want to delete this employee? This will also remove all their leave records. This action cannot be undone.",
+      confirmText: "Delete",
+      cancelText: "Keep",
+      type: "danger",
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`/api/employees/${id}`, { method: "DELETE" });
       const json = await res.json();
       if (json.success) {
         fetchEmployees();
+        toast.success("Employee Deleted", "Employee and related data removed successfully.");
       }
     } catch (error) {
       console.error("Delete error:", error);
+      toast.error("Delete Failed", "Something went wrong. Please try again.");
     }
   };
 
@@ -150,17 +167,30 @@ export default function EmployeesPage() {
             {total} total employee{total !== 1 ? "s" : ""}
           </p>
         </div>
-        <button
-          onClick={() => {
-            setForm(defaultForm);
-            setEditId(null);
-            setShowModal(true);
-          }}
-          className="inline-flex items-center gap-2 px-4 py-2.5 gradient-primary text-white font-medium rounded-lg text-sm hover:opacity-90 transition-all shadow-lg shadow-blue-500/20"
-        >
-          <UserPlus className="w-4 h-4" />
-          Add Employee
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              if (employees.length === 0) { toast.warning("No Data", "No employees to export."); return; }
+              exportToCSV(employees.map(({ profile_photo, ...rest }) => rest), "employees");
+              toast.success("Export Complete", "Employee data exported as CSV.");
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 font-medium rounded-lg text-sm hover:bg-slate-200 transition-all border border-slate-200"
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+          <button
+            onClick={() => {
+              setForm(defaultForm);
+              setEditId(null);
+              setShowModal(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 gradient-primary text-white font-medium rounded-lg text-sm hover:opacity-90 transition-all shadow-lg shadow-blue-500/20"
+          >
+            <UserPlus className="w-4 h-4" />
+            Add Employee
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
