@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, execute } from "@/database/connection";
+import { readDB, writeDB, getNextId } from "@/database/connection";
 import { requireAuth } from "@/lib/auth";
-import { LeaveBalance } from "@/types";
 
-// GET leave balance
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth();
@@ -13,6 +11,8 @@ export async function GET(request: NextRequest) {
     const year = parseInt(searchParams.get("year") || String(new Date().getFullYear()));
     const employeeId = searchParams.get("employee_id");
 
+    const db = readDB();
+
     let targetId: number;
 
     if (user.role === "hr" && employeeId) {
@@ -21,32 +21,35 @@ export async function GET(request: NextRequest) {
       targetId = user.id;
     } else {
       // HR viewing all balances
-      const balances = await query<LeaveBalance[]>(
-        "SELECT lb.*, e.full_name, e.emp_id FROM leave_balance lb JOIN employees e ON lb.employee_id = e.id WHERE lb.month = ? AND lb.year = ?",
-        [month, year]
-      );
+      const balances = db.leave_balance
+        .filter((lb) => lb.month === month && lb.year === year)
+        .map((lb) => {
+          const emp = db.employees.find((e) => e.id === lb.employee_id);
+          return { ...lb, full_name: emp?.full_name, emp_id: emp?.emp_id };
+        });
       return NextResponse.json({ success: true, data: balances });
     }
 
-    const balances = await query<LeaveBalance[]>(
-      "SELECT * FROM leave_balance WHERE employee_id = ? AND month = ? AND year = ?",
-      [targetId, month, year]
+    let balance = db.leave_balance.find(
+      (lb) => lb.employee_id === targetId && lb.month === month && lb.year === year
     );
 
-    if (balances.length === 0) {
+    if (!balance) {
       // Create default balance
-      await execute(
-        "INSERT INTO leave_balance (employee_id, month, year, total_cl, used_cl, remaining_cl) VALUES (?, ?, ?, 2, 0, 2) ON DUPLICATE KEY UPDATE employee_id = employee_id",
-        [targetId, month, year]
-      );
-
-      return NextResponse.json({
-        success: true,
-        data: { employee_id: targetId, month, year, total_cl: 2, used_cl: 0, remaining_cl: 2 },
-      });
+      balance = {
+        id: getNextId(db.leave_balance),
+        employee_id: targetId,
+        month,
+        year,
+        total_cl: 2,
+        used_cl: 0,
+        remaining_cl: 2,
+      };
+      db.leave_balance.push(balance);
+      writeDB(db);
     }
 
-    return NextResponse.json({ success: true, data: balances[0] });
+    return NextResponse.json({ success: true, data: balance });
   } catch (error: unknown) {
     const err = error as Error;
     if (err.message === "Unauthorized") {

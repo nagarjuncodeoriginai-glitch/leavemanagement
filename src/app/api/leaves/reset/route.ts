@@ -1,38 +1,49 @@
 import { NextResponse } from "next/server";
-import { query, execute } from "@/database/connection";
-import { Employee } from "@/types";
+import { readDB, writeDB, getNextId } from "@/database/connection";
+import { requireAuth } from "@/lib/auth";
 
-// POST - Monthly leave reset (can be called by cron job)
+// POST - reset leave balances for new month (HR only)
 export async function POST() {
   try {
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
+    await requireAuth("hr");
 
-    // Get all active employees
-    const employees = await query<Employee[]>(
-      "SELECT id FROM employees WHERE status = 'active'"
-    );
+    const db = readDB();
+    const month = new Date().getMonth() + 1;
+    const year = new Date().getFullYear();
 
-    let resetCount = 0;
+    // Create balance for all active employees for current month
+    const activeEmployees = db.employees.filter((e) => e.status === "active");
 
-    for (const emp of employees) {
-      // Insert or reset leave balance for current month
-      await execute(
-        `INSERT INTO leave_balance (employee_id, month, year, total_cl, used_cl, remaining_cl) 
-         VALUES (?, ?, ?, 2, 0, 2) 
-         ON DUPLICATE KEY UPDATE total_cl = 2, used_cl = 0, remaining_cl = 2`,
-        [emp.id, currentMonth, currentYear]
+    for (const emp of activeEmployees) {
+      const exists = db.leave_balance.find(
+        (lb) => lb.employee_id === emp.id && lb.month === month && lb.year === year
       );
-      resetCount++;
+
+      if (!exists) {
+        db.leave_balance.push({
+          id: getNextId(db.leave_balance),
+          employee_id: emp.id,
+          month,
+          year,
+          total_cl: 2,
+          used_cl: 0,
+          remaining_cl: 2,
+        });
+      }
     }
+
+    writeDB(db);
 
     return NextResponse.json({
       success: true,
-      message: `Leave balance reset for ${resetCount} employees for ${currentMonth}/${currentYear}`,
+      message: `Leave balances reset for ${month}/${year}. ${activeEmployees.length} employees updated.`,
     });
-  } catch (error) {
-    console.error("Leave reset error:", error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    if (err.message === "Unauthorized" || err.message === "Forbidden") {
+      return NextResponse.json({ success: false, message: err.message }, { status: 401 });
+    }
+    console.error("Reset balance error:", error);
     return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });
   }
 }
