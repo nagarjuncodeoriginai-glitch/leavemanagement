@@ -55,10 +55,11 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1, "cv02" 1, "cv03" 1, "cv04" 1, "cv11" 1;
     -webkit-font-smoothing: antialiased;
@@ -247,13 +248,14 @@
   height: 5px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-300/60 rounded-full;
+  background: rgb(203 213 225 / 0.6);
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-400/80;
+  background: rgb(148 163 184 / 0.8);
 }
 
 /* Custom Animations */
@@ -304,7 +306,9 @@
 
 /* Focus visible for accessibility */
 *:focus-visible {
-  @apply outline-none ring-2 ring-blue-500/40 ring-offset-2 ring-offset-white rounded-lg;
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 0.4);
+  border-radius: 0.5rem;
 }
 
 /* Selection */
