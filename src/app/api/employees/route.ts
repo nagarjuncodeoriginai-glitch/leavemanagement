@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, execute } from "@/database/connection";
+import { getData, saveData, getNextId } from "@/database/connection";
 import { requireAuth, hashPassword } from "@/lib/auth";
 import { employeeSchema } from "@/lib/validations";
-import { Employee } from "@/types";
-import { ResultSetHeader } from "mysql2";
 
 // GET all employees (HR only)
 export async function GET(request: NextRequest) {
@@ -16,41 +14,42 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status") || "";
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-    const offset = (page - 1) * limit;
 
-    let whereClause = "WHERE 1=1";
-    const params: unknown[] = [];
+    const db = getData();
+    let filtered = [...db.employees];
 
     if (search) {
-      whereClause += " AND (full_name LIKE ? OR emp_id LIKE ? OR email LIKE ? OR department LIKE ?)";
-      const searchTerm = `%${search}%`;
-      params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+      const s = search.toLowerCase();
+      filtered = filtered.filter(
+        (e) =>
+          e.full_name.toLowerCase().includes(s) ||
+          e.emp_id.toLowerCase().includes(s) ||
+          e.email.toLowerCase().includes(s) ||
+          e.department.toLowerCase().includes(s)
+      );
     }
 
     if (department) {
-      whereClause += " AND department = ?";
-      params.push(department);
+      filtered = filtered.filter((e) => e.department === department);
     }
 
     if (status) {
-      whereClause += " AND status = ?";
-      params.push(status);
+      filtered = filtered.filter((e) => e.status === status);
     }
 
-    const countResult = await query<{ total: number }[]>(
-      `SELECT COUNT(*) as total FROM employees ${whereClause}`,
-      params
-    );
-    const total = countResult[0]?.total || 0;
+    // Sort by created_at descending
+    filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    const employees = await query<Employee[]>(
-      `SELECT id, emp_id, full_name, email, phone, gender, date_of_birth, address, department, designation, manager_name, doj, employment_type, probation_period, confirmation_date, work_location, shift_timing, salary_package, bank_account_number, ifsc_code, pan_number, aadhaar_number, username, status, created_at, updated_at FROM employees ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      [...params, limit, offset]
-    );
+    const total = filtered.length;
+    const offset = (page - 1) * limit;
+    const paged = filtered.slice(offset, offset + limit);
+
+    // Remove password from response
+    const safeData = paged.map(({ password, ...rest }) => rest);
 
     return NextResponse.json({
       success: true,
-      data: employees,
+      data: safeData,
       total,
       page,
       limit,
@@ -65,10 +64,7 @@ export async function GET(request: NextRequest) {
       );
     }
     console.error("Get employees error:", error);
-    return NextResponse.json(
-      { success: false, message: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -88,35 +84,72 @@ export async function POST(request: NextRequest) {
     }
 
     const data = validation.data;
-    const hashedPassword = await hashPassword(data.password);
+    const db = getData();
 
-    const result = await execute(
-      `INSERT INTO employees (emp_id, full_name, email, phone, gender, date_of_birth, address, department, designation, manager_name, doj, employment_type, probation_period, confirmation_date, work_location, shift_timing, salary_package, bank_account_number, ifsc_code, pan_number, aadhaar_number, username, password, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        data.emp_id, data.full_name, data.email, data.phone, data.gender,
-        data.date_of_birth || null, data.address || null, data.department,
-        data.designation, data.manager_name || null, data.doj,
-        data.employment_type, data.probation_period || null,
-        data.confirmation_date || null, data.work_location || null,
-        data.shift_timing || null, data.salary_package || null,
-        data.bank_account_number || null, data.ifsc_code || null,
-        data.pan_number || null, data.aadhaar_number || null,
-        data.username, hashedPassword, data.status,
-      ]
-    ) as ResultSetHeader;
+    // Check for duplicates
+    if (db.employees.find((e) => e.emp_id === data.emp_id)) {
+      return NextResponse.json({ success: false, message: "Employee ID already exists" }, { status: 409 });
+    }
+    if (db.employees.find((e) => e.email === data.email)) {
+      return NextResponse.json({ success: false, message: "Email already exists" }, { status: 409 });
+    }
+    if (db.employees.find((e) => e.username === data.username)) {
+      return NextResponse.json({ success: false, message: "Username already exists" }, { status: 409 });
+    }
+
+    const hashedPassword = await hashPassword(data.password);
+    const now = new Date().toISOString();
+    const newId = getNextId(db.employees);
+
+    const newEmployee = {
+      id: newId,
+      emp_id: data.emp_id,
+      full_name: data.full_name,
+      email: data.email,
+      phone: data.phone,
+      gender: data.gender,
+      date_of_birth: data.date_of_birth || "",
+      address: data.address || "",
+      department: data.department,
+      designation: data.designation,
+      manager_name: data.manager_name || "",
+      doj: data.doj,
+      employment_type: data.employment_type,
+      probation_period: data.probation_period || "",
+      confirmation_date: data.confirmation_date || "",
+      work_location: data.work_location || "",
+      shift_timing: data.shift_timing || "",
+      salary_package: data.salary_package || "",
+      bank_account_number: data.bank_account_number || "",
+      ifsc_code: data.ifsc_code || "",
+      pan_number: data.pan_number || "",
+      aadhaar_number: data.aadhaar_number || "",
+      username: data.username,
+      password: hashedPassword,
+      status: data.status || "active" as const,
+      created_at: now,
+      updated_at: now,
+    };
+
+    db.employees.push(newEmployee);
 
     // Create initial leave balance for current month
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    db.leave_balance.push({
+      id: getNextId(db.leave_balance),
+      employee_id: newId,
+      month: currentMonth,
+      year: currentYear,
+      total_cl: 2,
+      used_cl: 0,
+      remaining_cl: 2,
+    });
 
-    await execute(
-      `INSERT INTO leave_balance (employee_id, month, year, total_cl, used_cl, remaining_cl) VALUES (?, ?, ?, 2, 0, 2)`,
-      [result.insertId, currentMonth, currentYear]
-    );
+    saveData(db);
 
     return NextResponse.json(
-      { success: true, message: "Employee created successfully", id: result.insertId },
+      { success: true, message: "Employee created successfully", id: newId },
       { status: 201 }
     );
   } catch (error: unknown) {
@@ -127,16 +160,7 @@ export async function POST(request: NextRequest) {
         { status: err.message === "Unauthorized" ? 401 : 403 }
       );
     }
-    if ((err as { code?: string }).code === "ER_DUP_ENTRY") {
-      return NextResponse.json(
-        { success: false, message: "Employee ID, email, or username already exists" },
-        { status: 409 }
-      );
-    }
     console.error("Create employee error:", error);
-    return NextResponse.json(
-      { success: false, message: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, message: "Internal server error" }, { status: 500 });
   }
 }

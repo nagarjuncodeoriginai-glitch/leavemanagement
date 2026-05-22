@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, execute } from "@/database/connection";
+import { getData, saveData, getNextId } from "@/database/connection";
 import { requireAuth } from "@/lib/auth";
-import { Leave, LeaveBalance } from "@/types";
 
 // PUT - Approve/Reject leave (HR only)
 export async function PUT(
@@ -21,20 +20,14 @@ export async function PUT(
       );
     }
 
-    // Get the leave details
-    const leaves = await query<Leave[]>(
-      "SELECT * FROM leaves WHERE id = ?",
-      [id]
-    );
+    const db = getData();
+    const leaveIndex = db.leaves.findIndex((l) => l.id === parseInt(id));
 
-    if (leaves.length === 0) {
-      return NextResponse.json(
-        { success: false, message: "Leave not found" },
-        { status: 404 }
-      );
+    if (leaveIndex === -1) {
+      return NextResponse.json({ success: false, message: "Leave not found" }, { status: 404 });
     }
 
-    const leave = leaves[0];
+    const leave = db.leaves[leaveIndex];
 
     if (leave.status !== "pending") {
       return NextResponse.json(
@@ -44,10 +37,9 @@ export async function PUT(
     }
 
     // Update leave status
-    await execute(
-      "UPDATE leaves SET status = ?, reviewed_at = NOW(), reviewed_by = 'HR Admin' WHERE id = ?",
-      [action, id]
-    );
+    db.leaves[leaveIndex].status = action;
+    db.leaves[leaveIndex].reviewed_at = new Date().toISOString();
+    db.leaves[leaveIndex].reviewed_by = "HR Admin";
 
     // If approved, update leave balance
     if (action === "approved") {
@@ -57,24 +49,27 @@ export async function PUT(
       const month = start.getMonth() + 1;
       const year = start.getFullYear();
 
-      // Check if balance exists
-      const balances = await query<LeaveBalance[]>(
-        "SELECT * FROM leave_balance WHERE employee_id = ? AND month = ? AND year = ?",
-        [leave.employee_id, month, year]
+      const balanceIndex = db.leave_balance.findIndex(
+        (lb) => lb.employee_id === leave.employee_id && lb.month === month && lb.year === year
       );
 
-      if (balances.length > 0) {
-        await execute(
-          "UPDATE leave_balance SET used_cl = used_cl + ?, remaining_cl = remaining_cl - ? WHERE employee_id = ? AND month = ? AND year = ?",
-          [diffDays, diffDays, leave.employee_id, month, year]
-        );
+      if (balanceIndex !== -1) {
+        db.leave_balance[balanceIndex].used_cl += diffDays;
+        db.leave_balance[balanceIndex].remaining_cl -= diffDays;
       } else {
-        await execute(
-          "INSERT INTO leave_balance (employee_id, month, year, total_cl, used_cl, remaining_cl) VALUES (?, ?, ?, 2, ?, ?)",
-          [leave.employee_id, month, year, diffDays, 2 - diffDays]
-        );
+        db.leave_balance.push({
+          id: getNextId(db.leave_balance),
+          employee_id: leave.employee_id,
+          month,
+          year,
+          total_cl: 2,
+          used_cl: diffDays,
+          remaining_cl: 2 - diffDays,
+        });
       }
     }
+
+    saveData(db);
 
     return NextResponse.json({
       success: true,

@@ -1,70 +1,57 @@
 import { NextResponse } from "next/server";
-import { query } from "@/database/connection";
+import { getData } from "@/database/connection";
 import { requireAuth } from "@/lib/auth";
 
 export async function GET() {
   try {
     await requireAuth("hr");
 
+    const db = getData();
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
 
-    // Total employees
-    const totalResult = await query<{ count: number }[]>(
-      "SELECT COUNT(*) as count FROM employees"
-    );
+    const totalEmployees = db.employees.length;
+    const activeEmployees = db.employees.filter((e) => e.status === "active").length;
+    const pendingLeaves = db.leaves.filter((l) => l.status === "pending").length;
+    const approvedLeavesThisMonth = db.leaves.filter(
+      (l) =>
+        l.status === "approved" &&
+        new Date(l.start_date).getMonth() + 1 === currentMonth &&
+        new Date(l.start_date).getFullYear() === currentYear
+    ).length;
 
-    // Active employees
-    const activeResult = await query<{ count: number }[]>(
-      "SELECT COUNT(*) as count FROM employees WHERE status = 'active'"
-    );
+    // Department wise count
+    const deptMap: Record<string, number> = {};
+    for (const emp of db.employees) {
+      deptMap[emp.department] = (deptMap[emp.department] || 0) + 1;
+    }
+    const departmentWise = Object.entries(deptMap)
+      .map(([department, count]) => ({ department, count }))
+      .sort((a, b) => b.count - a.count);
 
-    // Pending leaves
-    const pendingResult = await query<{ count: number }[]>(
-      "SELECT COUNT(*) as count FROM leaves WHERE status = 'pending'"
-    );
-
-    // Approved leaves this month
-    const approvedResult = await query<{ count: number }[]>(
-      "SELECT COUNT(*) as count FROM leaves WHERE status = 'approved' AND MONTH(start_date) = ? AND YEAR(start_date) = ?",
-      [currentMonth, currentYear]
-    );
-
-    // Department wise employee count
-    const departmentWise = await query<{ department: string; count: number }[]>(
-      "SELECT department, COUNT(*) as count FROM employees GROUP BY department ORDER BY count DESC"
-    );
-
-    // Recent leave applications
-    const recentLeaves = await query(
-      `SELECT l.*, e.full_name as employee_name, e.emp_id 
-       FROM leaves l 
-       JOIN employees e ON l.employee_id = e.id 
-       ORDER BY l.applied_at DESC 
-       LIMIT 5`
-    );
-
-    // Monthly leave usage
-    const monthlyUsage = await query(
-      `SELECT MONTH(start_date) as month, COUNT(*) as count 
-       FROM leaves 
-       WHERE YEAR(start_date) = ? AND status = 'approved'
-       GROUP BY MONTH(start_date) 
-       ORDER BY month`,
-      [currentYear]
-    );
+    // Recent leaves with employee names
+    const recentLeaves = db.leaves
+      .sort((a, b) => new Date(b.applied_at).getTime() - new Date(a.applied_at).getTime())
+      .slice(0, 5)
+      .map((leave) => {
+        const emp = db.employees.find((e) => e.id === leave.employee_id);
+        return {
+          ...leave,
+          employee_name: emp?.full_name || "Unknown",
+          emp_id: emp?.emp_id || "—",
+        };
+      });
 
     return NextResponse.json({
       success: true,
       data: {
-        totalEmployees: totalResult[0]?.count || 0,
-        activeEmployees: activeResult[0]?.count || 0,
-        pendingLeaves: pendingResult[0]?.count || 0,
-        approvedLeavesThisMonth: approvedResult[0]?.count || 0,
+        totalEmployees,
+        activeEmployees,
+        pendingLeaves,
+        approvedLeavesThisMonth,
         departmentWise,
         recentLeaves,
-        monthlyUsage,
       },
     });
   } catch (error: unknown) {

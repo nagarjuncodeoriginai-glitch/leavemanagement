@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query } from "@/database/connection";
+import { getData } from "@/database/connection";
 import { verifyPassword, generateToken } from "@/lib/auth";
 import { loginSchema } from "@/lib/validations";
-import { HRAdmin, Employee, JWTPayload } from "@/types";
+import { JWTPayload } from "@/types";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,15 +17,12 @@ export async function POST(request: NextRequest) {
     }
 
     const { username, password } = validation.data;
+    const db = getData();
 
     // Check HR Admin first
-    const admins = await query<HRAdmin[]>(
-      "SELECT * FROM hr_admin WHERE username = ?",
-      [username]
-    );
+    const admin = db.hr_admin.find((a) => a.username === username);
 
-    if (admins.length > 0) {
-      const admin = admins[0];
+    if (admin) {
       const isValid = await verifyPassword(password, admin.password);
 
       if (isValid) {
@@ -48,7 +45,7 @@ export async function POST(request: NextRequest) {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "strict",
-          maxAge: 8 * 60 * 60, // 8 hours
+          maxAge: 8 * 60 * 60,
           path: "/",
         });
 
@@ -57,14 +54,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check Employee
-    const employees = await query<Employee[]>(
-      "SELECT * FROM employees WHERE username = ? AND status = 'active'",
-      [username]
+    const employee = db.employees.find(
+      (e) => e.username === username && e.status === "active"
     );
 
-    if (employees.length > 0) {
-      const employee = employees[0];
-      const isValid = await verifyPassword(password, employee.password!);
+    if (employee) {
+      const isValid = await verifyPassword(password, employee.password);
 
       if (isValid) {
         const payload: JWTPayload = {
