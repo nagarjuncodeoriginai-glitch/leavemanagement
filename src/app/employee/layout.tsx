@@ -27,6 +27,7 @@ const navItems = [
   { href: "/employee", label: "Dashboard", icon: LayoutDashboard, description: "Overview & balance" },
   { href: "/employee/apply-leave", label: "Apply Leave", icon: CalendarPlus, description: "Submit request" },
   { href: "/employee/leaves", label: "Leave History", icon: CalendarCheck, description: "Track status" },
+  { href: "/employee/attendance", label: "Attendance", icon: Clock, description: "Check-in & log" },
   { href: "/employee/ai-assistant", label: "AI Assistant", icon: Brain, description: "Ask anything" },
   { href: "/employee/profile", label: "My Profile", icon: User, description: "Personal info" },
 ];
