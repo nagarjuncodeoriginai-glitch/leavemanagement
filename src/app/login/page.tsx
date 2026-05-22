@@ -67,11 +67,11 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
             <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-blue-500/30">
-              <Building2 className="w-7 h-7 text-white" />
+              <span className="text-white font-bold text-lg">CO</span>
             </div>
           </Link>
           <h1 className="mt-4 text-2xl font-bold text-white">Welcome Back</h1>
-          <p className="mt-2 text-slate-400">Sign in to your HRMS account</p>
+          <p className="mt-2 text-slate-400">Sign in to CodeOrigin.AI HRMS</p>
         </div>
 
         {/* Login Form */}

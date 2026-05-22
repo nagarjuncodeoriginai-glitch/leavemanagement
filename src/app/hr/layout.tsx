@@ -66,10 +66,10 @@ export default function HRLayout({ children }: { children: React.ReactNode }) {
           {/* Logo */}
           <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-100">
             <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-white" />
+              <span className="text-white font-bold text-sm">CO</span>
             </div>
             <div>
-              <span className="font-bold text-slate-900">HRMS</span>
+              <span className="font-bold text-slate-900">CodeOrigin.AI</span>
               <p className="text-xs text-slate-500">Admin Portal</p>
             </div>
             <button

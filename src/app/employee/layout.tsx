@@ -59,10 +59,10 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
         <div className="flex flex-col h-full">
           <div className="flex items-center gap-3 px-6 py-5 border-b border-slate-100">
             <div className="w-9 h-9 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-white" />
+              <span className="text-white font-bold text-sm">CO</span>
             </div>
             <div>
-              <span className="font-bold text-slate-900">HRMS</span>
+              <span className="font-bold text-slate-900">CodeOrigin.AI</span>
               <p className="text-xs text-slate-500">Employee Portal</p>
             </div>
             <button onClick={() => setSidebarOpen(false)} className="ml-auto lg:hidden">

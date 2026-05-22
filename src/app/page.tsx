@@ -37,9 +37,9 @@ export default function LandingPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2">
               <div className="w-9 h-9 rounded-lg gradient-primary flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-white" />
+                <span className="text-white font-bold text-xs">CO</span>
               </div>
-              <span className="text-xl font-bold text-slate-900">HRMS</span>
+              <span className="text-xl font-bold text-slate-900">CodeOrigin.AI</span>
             </div>
             <div className="hidden md:flex items-center gap-8">
               <a href="#features" className="text-sm text-slate-600 hover:text-blue-600 transition-colors">Features</a>
@@ -72,7 +72,7 @@ export default function LandingPage() {
               transition={{ delay: 0.2 }}
             >
               <Sparkles className="w-4 h-4" />
-              Enterprise-Grade HR Management
+              CodeOrigin.AI - Enterprise HR Management
             </motion.div>
             <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight leading-tight">
               Manage Your Team
@@ -412,12 +412,12 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-                <Building2 className="w-4 h-4 text-white" />
+                <span className="text-white font-bold text-xs">CO</span>
               </div>
-              <span className="font-bold text-slate-900">HRMS</span>
+              <span className="font-bold text-slate-900">CodeOrigin.AI</span>
             </div>
             <p className="text-sm text-slate-500">
-              &copy; {new Date().getFullYear()} HRMS by CodeOrigin. All rights reserved.
+              &copy; {new Date().getFullYear()} CodeOrigin.AI - HR Management System. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
               <a href="#" className="text-sm text-slate-500 hover:text-slate-700">Privacy</a>

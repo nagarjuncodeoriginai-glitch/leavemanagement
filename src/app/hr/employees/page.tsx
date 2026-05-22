@@ -11,6 +11,7 @@ import {
   Filter,
   UserPlus,
   AlertCircle,
+  Users,
 } from "lucide-react";
 import { Employee, EmployeeFormData } from "@/types";
 
